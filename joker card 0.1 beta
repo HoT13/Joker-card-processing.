@@ -1,0 +1,109 @@
+##joker card game
+
+import random
+
+deck = []
+score = 0
+game_over = False
+message = ""
+
+# Simple animation variables
+is_animating = False
+card_x = 0
+card_y = 0
+deck_x = 100
+deck_y = 150
+target_x = 300
+target_y = 150
+current_card = None
+
+def setup():
+    size(500, 300)
+    rectMode(CENTER)
+    textAlign(CENTER, CENTER)
+    reset_game()
+
+def reset_game():
+    global deck, score, game_over, message, is_animating, current_card
+    deck = [False] * 9 + [True]
+    random.shuffle(deck)
+    score = 0
+    game_over = False
+    message = "Click the deck to draw!"
+    is_animating = False
+    current_card = None
+
+def draw():
+    if game_over:
+        background(150, 50, 50)
+    else:
+        background(34, 139, 34)
+        
+    # UI Text
+    fill(255)
+    textSize(20)
+    text("Score: " + str(score) + "   Cards: " + str(len(deck)), width/2, 30)
+    text(message, width/2, 270)
+
+    # Draw the deck (face down)
+    if len(deck) > 0:
+        fill(255)
+        rect(deck_x, deck_y, 100, 140, 5)
+        fill(180, 30, 30)
+        rect(deck_x, deck_y, 80, 120, 3)
+
+    global card_x, card_y, is_animating, game_over, score, message, current_card
+    
+    # SIMPLE ANIMATION LOGIC: Slide right
+    if is_animating:
+        # Move card exactly 10 pixels right per frame
+        card_x += 10 
+        
+        # Check if it reached the target
+        if card_x >= target_x:
+            card_x = target_x
+            is_animating = False
+            
+            # Reveal logic happens instantly after sliding finishes
+            if current_card == True:
+                game_over = True
+                message = "JOKER! You lose. Click anywhere."
+            else:
+                score += 1
+                message = "Safe! Click deck again."
+
+    # Draw the moving/revealed card
+    if current_card is not None:
+        fill(255)
+        rect(card_x, card_y, 100, 140, 5)
+        
+        # If it's moving, show the back. If it stopped, show the face.
+        if is_animating:
+            fill(180, 30, 30)
+            rect(card_x, card_y, 80, 120, 3)
+        else:
+            textSize(24)
+            if current_card == True:
+                fill(0)
+                text("JOKER", card_x, card_y)
+            else:
+                fill(34, 139, 34)
+                text("SAFE", card_x, card_y)
+
+def mousePressed():
+    global is_animating, game_over, card_x, card_y, current_card, message
+    
+    if game_over:
+        reset_game()
+        return
+        
+    if is_animating:
+        return # Don't click while sliding
+        
+    # Check if clicked roughly on the deck
+    if len(deck) > 0 and mouseX < 150:
+        current_card = deck.pop()
+        card_x = deck_x # Start position
+        card_y = deck_y
+        is_animating = True
+        message = "Drawing..."
